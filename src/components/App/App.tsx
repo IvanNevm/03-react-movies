@@ -1,37 +1,46 @@
 import { useState } from 'react';
-import reactLogo from '/src/assets/react.svg';
-import viteLogo from '/vite.svg';
-import './App.css';
+import SearchBar from '../SearchBar/SearchBar';
+import MovieGrid from '../MovieGrid/MovieGrid';
+import MovieModal from '../MovieModal/MovieModal';
+import Loader from '../Loader/Loader';
+import ErrorMessage from '../ErrorMessage/ErrorMessage';
+import { fetchMovies } from '../../services/movieService';
+import type { Movie } from '../../types/movie';
+import styles from './App.module.css';
+import { toast } from 'react-hot-toast';
 
-const App: React.FC = () => {
-  const [count, setCount] = useState<number>(0);
+const App = () => {
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
+
+  const handleSearch = async (query: string) => {
+    setLoading(true);
+    setError(false);
+    try {
+      const results = await fetchMovies(query);
+      if (results.length === 0) {
+        toast.error('No movies found for your request.');
+      }
+      setMovies(results);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <header>
-        <a href="https://vite.dev" target="_blank" rel="noopener noreferrer">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </header>
-      
-      <main>
-        <h1>Vite + React</h1>
-        <div className="card">
-          <button onClick={() => setCount((prevCount) => prevCount + 1)}>
-            Count is {count}
-          </button>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test HMR.
-          </p>
-        </div>
-        <p className="read-the-docs">
-          Click on the Vite and React logos to learn more.
-        </p>
-      </main>
-    </>
+    <div className={styles.app}>
+      <SearchBar onSubmit={handleSearch} />
+      {loading && <Loader />}
+      {error && <ErrorMessage />}
+      {movies.length > 0 && <MovieGrid movies={movies} onSelect={setSelectedMovie} />}
+      {selectedMovie && (
+        <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+      )}
+    </div>
   );
 };
 

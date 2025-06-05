@@ -30,7 +30,7 @@
 
 .form {
     display: flex;
-    gap: 8px;
+    gap: 9px;
     flex-wrap: nowrap;
 }
 
